@@ -1,0 +1,44 @@
+:root {
+  --paper: #f2f4f5;
+  --ink: #18222c;
+  --steel: #5a6673;
+  --brass: #a67c2e;
+  --line: #d9dee2;
+  --panel: #1e2a35;
+  --panel-text: #e8ecef;
+
+  color-scheme: light;
+  font: 17px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
