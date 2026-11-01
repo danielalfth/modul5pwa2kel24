@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import gunService from '../services/gunService'
+import { getCache, setCache, generateCacheKey } from '../utils/queryCache'
 
 // ---------------------------------------------------------------------------
 // useGuns — fetch the paginated / filtered product list from the API.
@@ -7,6 +8,8 @@ import gunService from '../services/gunService'
 // Returns { guns, loading, error, pagination, refetch }.
 // When the API is unreachable the `error` string will be set and `guns`
 // will remain an empty array so the UI can show a proper error state.
+//
+// ponytail: cache with 5 min TTL to reduce API calls
 // ---------------------------------------------------------------------------
 
 export function useGuns(params = {}) {
@@ -18,7 +21,21 @@ export function useGuns(params = {}) {
   // Serialise params so the effect re-runs when they change.
   const paramKey = JSON.stringify(params)
 
-  const fetchGuns = useCallback(async () => {
+  const fetchGuns = useCallback(async (skipCache = false) => {
+    const cacheKey = generateCacheKey('guns', params)
+    
+    // Check cache first
+    if (!skipCache) {
+      const cached = getCache(cacheKey)
+      if (cached) {
+        setGuns(cached.guns)
+        setPagination(cached.pagination)
+        setLoading(false)
+        setError(null)
+        return
+      }
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -26,8 +43,15 @@ export function useGuns(params = {}) {
       const response = await gunService.getGuns(params)
 
       if (response.success) {
-        setGuns(response.data || [])
-        setPagination(response.pagination || null)
+        const result = {
+          guns: response.data || [],
+          pagination: response.pagination || null
+        }
+        setGuns(result.guns)
+        setPagination(result.pagination)
+        
+        // Cache the result
+        setCache(cacheKey, result)
       } else {
         setError(response.message || 'Failed to fetch products.')
       }
@@ -44,7 +68,13 @@ export function useGuns(params = {}) {
     fetchGuns()
   }, [fetchGuns])
 
-  return { guns, loading, error, pagination, refetch: fetchGuns }
+  return { 
+    guns, 
+    loading, 
+    error, 
+    pagination, 
+    refetch: () => fetchGuns(true) // Force skip cache on manual refetch
+  }
 }
 
 // ---------------------------------------------------------------------------

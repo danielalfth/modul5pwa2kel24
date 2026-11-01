@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import reviewService from '../services/reviewService'
+import { getCache, setCache, clearCache } from '../utils/queryCache'
 
 // ---------------------------------------------------------------------------
 // useReviews — fetch reviews for a specific product.
+// ponytail: cache reviews with 5 min TTL
 // ---------------------------------------------------------------------------
 
 export function useReviews(gunId) {
@@ -10,11 +12,25 @@ export function useReviews(gunId) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  const fetchReviews = useCallback(async () => {
+  const fetchReviews = useCallback(async (skipCache = false) => {
     if (!gunId) {
       setLoading(false)
       return
     }
+    
+    const cacheKey = `reviews:${gunId}`
+    
+    // Check cache first
+    if (!skipCache) {
+      const cached = getCache(cacheKey)
+      if (cached) {
+        setReviews(cached)
+        setLoading(false)
+        setError(null)
+        return
+      }
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -22,7 +38,9 @@ export function useReviews(gunId) {
       const response = await reviewService.getReviews(gunId)
 
       if (response.success) {
-        setReviews(response.data || [])
+        const data = response.data || []
+        setReviews(data)
+        setCache(cacheKey, data)
       } else {
         setError(response.message || 'Failed to fetch reviews.')
       }
@@ -38,11 +56,17 @@ export function useReviews(gunId) {
     fetchReviews()
   }, [fetchReviews])
 
-  return { reviews, loading, error, refetch: fetchReviews }
+  return { 
+    reviews, 
+    loading, 
+    error, 
+    refetch: () => fetchReviews(true) 
+  }
 }
 
 // ---------------------------------------------------------------------------
 // useCreateReview — submit a new review for a product.
+// ponytail: clear cache on successful create
 // ---------------------------------------------------------------------------
 
 export function useCreateReview() {
@@ -60,6 +84,8 @@ export function useCreateReview() {
 
       if (response.success) {
         setSuccess(true)
+        // Clear cache for this product's reviews
+        clearCache(`reviews:${gunId}`)
         return response.data
       } else {
         setError(response.message || 'Failed to submit review.')

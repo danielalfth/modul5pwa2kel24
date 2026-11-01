@@ -4,6 +4,7 @@ import Footer from './components/Footer.jsx'
 import Catalog from './pages/Catalog.jsx'
 import FavoritesPage from './pages/FavoritesPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
+import EditProfilePage from './pages/EditProfilePage.jsx'
 import CreateGunPage from './pages/CreateGunPage.jsx'
 import EditGunPage from './pages/EditGunPage.jsx'
 import GunDetail from './components/gun/GunDetail.jsx'
@@ -36,6 +37,9 @@ function App() {
     } else if (target === 'Detail') {
       setSelectedGun(payload)
       setMode('detail')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else if (target === 'EditProfile') {
+      setMode('editProfile')
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       // Tab change
@@ -98,6 +102,15 @@ function App() {
           />
         )}
 
+        {mode === 'editProfile' && (
+          <EditProfilePage
+            onBack={() => {
+              setMode('list')
+              setTab('Profile')
+            }}
+          />
+        )}
+
         {/* Top-level Tabs */}
         {mode === 'list' && (
           <>
@@ -113,7 +126,10 @@ function App() {
               />
             )}
             {tab === 'Profile' && (
-              <ProfilePage onReplaySplash={() => setShowSplash(true)} />
+              <ProfilePage
+                onReplaySplash={() => setShowSplash(true)}
+                onEditProfile={() => handleNavigate('EditProfile')}
+              />
             )}
             {tab === 'About' && <About />}
             {tab === 'Contact' && <Contact />}

@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { ArrowLeft, Star, Send, Loader } from 'lucide-react'
+import { ArrowLeft, Star, Send, Loader, MessageCircle, Share2, Check } from 'lucide-react'
 import FavoriteButton from '../common/FavoriteButton'
+import LazyImage from '../common/LazyImage'
 import { useReviews, useCreateReview } from '../../hooks/useReviews'
 import { getUserIdentifier } from '../../services/userService'
 import { formatPrice, averageRating } from '../../utils/helpers'
+import { openWhatsApp } from '../../utils/whatsapp'
+import { shareProduct } from '../../utils/share'
 
 /**
  * Full-screen product detail view.
@@ -27,6 +30,9 @@ export default function GunDetail({ gun, onBack, onEdit, onDelete }) {
   const [comment, setComment] = useState('')
   const [reviewError, setReviewError] = useState('')
   const [reviewSuccess, setReviewSuccess] = useState('')
+
+  // Share state
+  const [shareSuccess, setShareSuccess] = useState(false)
 
   const avgRating = gun.average_rating || averageRating(reviews)
   const reviewCount = gun.review_count ?? reviews.length
@@ -57,6 +63,14 @@ export default function GunDetail({ gun, onBack, onEdit, onDelete }) {
     }
   }
 
+  const handleShare = async () => {
+    const result = await shareProduct(gun)
+    if (result.success) {
+      setShareSuccess(true)
+      setTimeout(() => setShareSuccess(false), 3000)
+    }
+  }
+
   return (
     <div className="detail">
       {/* Back button */}
@@ -66,7 +80,13 @@ export default function GunDetail({ gun, onBack, onEdit, onDelete }) {
 
       {/* Hero */}
       <div className="detail-hero">
-        <img className="detail-img" src={imgSrc} alt={gun.name} />
+        <LazyImage
+          className="detail-img"
+          src={imgSrc}
+          alt={gun.name}
+          width="600"
+          height="420"
+        />
         <div className="detail-info">
           <h1 className="display">{gun.name}</h1>
           <p className="type">
@@ -84,6 +104,26 @@ export default function GunDetail({ gun, onBack, onEdit, onDelete }) {
 
           <div className="detail-actions">
             <FavoriteButton gunId={gun.id || gun.name} />
+            <button 
+              type="button" 
+              className="btn btn--primary"
+              onClick={() => openWhatsApp(gun)}
+              title="Contact seller via WhatsApp"
+            >
+              <MessageCircle size={18} /> Hubungi Penjual
+            </button>
+            <button
+              type="button"
+              className="btn btn--outline"
+              onClick={handleShare}
+              title="Share this product"
+            >
+              {shareSuccess ? (
+                <><Check size={18} /> Shared!</>
+              ) : (
+                <><Share2 size={18} /> Share</>
+              )}
+            </button>
             {onEdit && (
               <button type="button" className="btn btn--outline" onClick={() => onEdit(gun)}>
                 Edit

@@ -1,5 +1,9 @@
 import FavoriteButton from '../common/FavoriteButton'
+import LazyImage from '../common/LazyImage'
 import { formatPrice, truncate } from '../../utils/helpers'
+import { MessageCircle, Share2 } from 'lucide-react'
+import { openWhatsApp } from '../../utils/whatsapp'
+import { shareProduct } from '../../utils/share'
 
 /**
  * Product card used in the catalog grid.
@@ -24,13 +28,12 @@ export default function GunCard({ gun, onSelect, onEdit, onDelete }) {
         onClick={() => onSelect(gun)}
         aria-label={`View ${gun.name}`}
       >
-        <img
+        <LazyImage
           className="card-img"
           src={imgSrc}
           alt={gun.name}
           width="240"
           height="180"
-          loading="lazy"
         />
 
         <span className="name display">{gun.name}</span>
@@ -50,6 +53,29 @@ export default function GunCard({ gun, onSelect, onEdit, onDelete }) {
       {/* Floating actions row */}
       <div className="card-actions">
         <FavoriteButton gunId={gun.id || gun.name} />
+
+        <button
+          type="button"
+          className="card-act-btn"
+          onClick={(e) => { e.stopPropagation(); openWhatsApp(gun) }}
+          aria-label="Contact seller via WhatsApp"
+          title="Hubungi Penjual"
+        >
+          <MessageCircle size={16} color="var(--ink)" />
+        </button>
+
+        <button
+          type="button"
+          className="card-act-btn"
+          onClick={async (e) => { 
+            e.stopPropagation()
+            await shareProduct(gun)
+          }}
+          aria-label="Share this product"
+          title="Share"
+        >
+          <Share2 size={16} color="var(--ink)" />
+        </button>
 
         {onEdit && (
           <button

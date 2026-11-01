@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import favoriteService from '../services/favoriteService'
 import { getUserIdentifier } from '../services/userService'
+import { getCache, setCache, clearCache } from '../utils/queryCache'
 
 // ---------------------------------------------------------------------------
 // localStorage fallback — used when the backend is unavailable so that
@@ -30,6 +31,7 @@ const writeLocalFavs = (ids) => {
 // useFavorites — list all favourited product IDs.
 //
 // First attempts the server; on failure uses localStorage.
+// ponytail: cache favorites with 2 min TTL (frequently changing data)
 // ---------------------------------------------------------------------------
 
 export function useFavorites() {
@@ -39,7 +41,21 @@ export function useFavorites() {
   const [isLocal, setIsLocal] = useState(false)
   const userIdentifier = getUserIdentifier()
 
-  const fetchFavorites = useCallback(async () => {
+  const fetchFavorites = useCallback(async (skipCache = false) => {
+    const cacheKey = `favorites:${userIdentifier}`
+    
+    // Check cache first
+    if (!skipCache) {
+      const cached = getCache(cacheKey)
+      if (cached) {
+        setFavorites(cached)
+        setIsLocal(false)
+        setLoading(false)
+        setError(null)
+        return
+      }
+    }
+
     try {
       setLoading(true)
       setError(null)
@@ -47,8 +63,11 @@ export function useFavorites() {
       const response = await favoriteService.getFavorites(userIdentifier)
 
       if (response.success) {
-        setFavorites(response.data || [])
+        const data = response.data || []
+        setFavorites(data)
         setIsLocal(false)
+        // Cache with shorter TTL (2 minutes)
+        setCache(cacheKey, data, 2 * 60 * 1000)
       } else {
         throw new Error(response.message)
       }
@@ -65,7 +84,13 @@ export function useFavorites() {
     fetchFavorites()
   }, [fetchFavorites])
 
-  return { favorites, loading, error, isLocal, refetch: fetchFavorites }
+  return { 
+    favorites, 
+    loading, 
+    error, 
+    isLocal, 
+    refetch: () => fetchFavorites(true) 
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +113,8 @@ export function useToggleFavorite() {
       })
 
       if (response.success) {
+        // Invalidate favorites cache so next fetch is fresh
+        clearCache(`favorites:${userIdentifier}`)
         return response.data
       }
       throw new Error(response.message)
