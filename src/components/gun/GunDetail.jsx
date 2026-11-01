@@ -5,7 +5,7 @@ import LazyImage from '../common/LazyImage'
 import { useReviews, useCreateReview } from '../../hooks/useReviews'
 import { getUserIdentifier } from '../../services/userService'
 import { formatPrice, averageRating } from '../../utils/helpers'
-import { openWhatsApp } from '../../utils/whatsapp'
+import { getWhatsAppLink } from '../../utils/whatsapp'
 import { shareProduct } from '../../utils/share'
 
 /**
@@ -104,14 +104,15 @@ export default function GunDetail({ gun, onBack, onEdit, onDelete }) {
 
           <div className="detail-actions">
             <FavoriteButton gunId={gun.id || gun.name} />
-            <button 
-              type="button" 
+            <a
+              href={getWhatsAppLink(gun)}
+              target="_blank"
+              rel="noopener noreferrer"
               className="btn btn--primary"
-              onClick={() => openWhatsApp(gun)}
               title="Contact seller via WhatsApp"
             >
               <MessageCircle size={18} /> Hubungi Penjual
-            </button>
+            </a>
             <button
               type="button"
               className="btn btn--outline"

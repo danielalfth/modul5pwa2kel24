@@ -1555,3 +1555,9 @@
   .lazy-skeleton { animation: none; }
   .lazy-img { opacity: 1; }
 }
+
+/* <a> tags styled as buttons — ensure consistent display */
+a.btn, a.card-act-btn {
+  display: inline-flex;
+  text-decoration: none;
+}

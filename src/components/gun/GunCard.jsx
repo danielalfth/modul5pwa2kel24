@@ -2,7 +2,7 @@ import FavoriteButton from '../common/FavoriteButton'
 import LazyImage from '../common/LazyImage'
 import { formatPrice, truncate } from '../../utils/helpers'
 import { MessageCircle, Share2 } from 'lucide-react'
-import { openWhatsApp } from '../../utils/whatsapp'
+import { getWhatsAppLink } from '../../utils/whatsapp'
 import { shareProduct } from '../../utils/share'
 
 /**
@@ -54,15 +54,17 @@ export default function GunCard({ gun, onSelect, onEdit, onDelete }) {
       <div className="card-actions">
         <FavoriteButton gunId={gun.id || gun.name} />
 
-        <button
-          type="button"
+        <a
+          href={getWhatsAppLink(gun)}
+          target="_blank"
+          rel="noopener noreferrer"
           className="card-act-btn"
-          onClick={(e) => { e.stopPropagation(); openWhatsApp(gun) }}
+          onClick={(e) => e.stopPropagation()}
           aria-label="Contact seller via WhatsApp"
           title="Hubungi Penjual"
         >
           <MessageCircle size={16} color="var(--ink)" />
-        </button>
+        </a>
 
         <button
           type="button"
