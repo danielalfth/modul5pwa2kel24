@@ -1561,3 +1561,246 @@ a.btn, a.card-act-btn {
   display: inline-flex;
   text-decoration: none;
 }
+
+/* ---------------------------------------------------------------------------
+ * Pagination
+ * --------------------------------------------------------------------------- */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 32px 0 16px;
+  flex-wrap: wrap;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-page {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pagination-page:hover {
+  border-color: var(--steel);
+}
+
+.pagination-page--active {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.pagination-ellipsis {
+  min-width: 28px;
+  text-align: center;
+  color: var(--steel);
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Multi-image carousel (GunDetail)
+ * --------------------------------------------------------------------------- */
+.detail-img-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.img-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.2s ease;
+}
+
+.img-nav:hover { background: rgba(0, 0, 0, 0.7); }
+.img-nav--prev { left: 8px; }
+.img-nav--next { right: 8px; }
+
+.img-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+
+.img-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease;
+}
+
+.img-dot--active {
+  background: #fff;
+}
+
+/* Thumbnail strip */
+.img-strip {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.img-thumb-btn {
+  flex-shrink: 0;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+  transition: border-color 0.15s ease;
+}
+
+.img-thumb-btn--active {
+  border-color: var(--brass);
+}
+
+.img-thumb {
+  display: block;
+  width: 60px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+ * Review thumbs up / down
+ * --------------------------------------------------------------------------- */
+.review-thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.thumb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: none;
+  color: var(--steel);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.thumb-btn:hover:not(:disabled) {
+  border-color: var(--steel);
+  color: var(--ink);
+}
+
+.thumb-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.thumb-btn--active.thumb-btn--up {
+  border-color: var(--brass);
+  color: var(--brass);
+  background: rgba(200, 145, 30, 0.08);
+}
+
+.thumb-btn--active.thumb-btn--down {
+  border-color: var(--steel);
+  color: var(--ink);
+  background: var(--paper2, #f5f5f5);
+}
+
+/* ---------------------------------------------------------------------------
+ * Review edit form
+ * --------------------------------------------------------------------------- */
+.review-edit-form {
+  padding: 12px;
+  background: var(--paper2, #f9f9f9);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+
+/* icon-btn danger variant */
+.icon-btn--danger {
+  color: #cc2a2a;
+}
+
+.icon-btn--danger:hover {
+  background: #fff0f0;
+}
+
+/* btn--danger-ghost (used in profile drafts) */
+.btn--danger-ghost {
+  background: none;
+  border: 1px solid transparent;
+  color: #cc2a2a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn--danger-ghost:hover {
+  background: #fff0f0;
+  border-color: #cc2a2a;
+}
+
+/* btn--danger */
+.btn--danger {
+  background: #cc2a2a;
+  color: #fff;
+  border: 1px solid #cc2a2a;
+}
+
+.btn--danger:hover {
+  background: #b02020;
+}
+
+/* btn--sm */
+.btn--sm {
+  padding: 5px 10px;
+  font-size: 0.82rem;
+}

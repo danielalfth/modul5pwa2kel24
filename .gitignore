@@ -19,3 +19,6 @@ dist-ssr/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Vite PWA dev output
+dev-dist/

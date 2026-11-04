@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Upload,
@@ -22,10 +23,13 @@ import {
 import ConfirmModal from '../components/modals/ConfirmModal'
 
 /**
- * CreateGunPage — Create a new weapon / hardware item with image upload,
+ * CreateGunPage â€” Create a new weapon / hardware item with image upload,
  * draft persistence (auto-save), specs, and assembly steps.
  */
 export default function CreateGunPage({ onBack, onSuccess }) {
+  const navigate = useNavigate()
+  const handleBack = onBack || (() => navigate(-1))
+  const handleSuccess = onSuccess || (() => navigate('/'))
   // Step state: 'upload' (upload or choose image) or 'form' (enter details)
   const [currentStep, setCurrentStep] = useState('upload')
 
@@ -44,6 +48,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [uploadedImageUrl, setUploadedImageUrl] = useState('')
+  const [additionalImages, setAdditionalImages] = useState([])
 
   // Specifications (ingredients in API)
   const [specs, setSpecs] = useState([
@@ -73,6 +78,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
       specs,
       steps,
       uploadedImageUrl,
+      additionalImages,
     }
     const saved = saveDraft(draftData, 'create')
     if (saved) {
@@ -102,6 +108,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
       if (draft.formData) setFormData(draft.formData)
       if (draft.specs) setSpecs(draft.specs)
       if (draft.steps) setSteps(draft.steps)
+      if (draft.additionalImages) setAdditionalImages(draft.additionalImages)
       if (draft.uploadedImageUrl) {
         setUploadedImageUrl(draft.uploadedImageUrl)
         setImagePreview(draft.uploadedImageUrl)
@@ -262,6 +269,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
       category: formData.category || 'makanan',
       description: formData.description.trim() || `${formData.type} caliber ${formData.caliber}.`,
       image_url: uploadedImageUrl || '/guns/pistol.svg',
+      images: [uploadedImageUrl || '/guns/pistol.svg', ...additionalImages].filter(Boolean),
       prep_time: 15,
       cook_time: Number(formData.price) || 500, // Price stored in cook_time
       servings: Number(formData.servings) || 1,
@@ -276,11 +284,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
       const response = await gunService.createGun(payload)
       if (response.success || response.data) {
         deleteDraft('create')
-        if (onSuccess) {
-          onSuccess(response.data)
-        } else if (onBack) {
-          onBack()
-        }
+        handleSuccess(response.data)
       } else {
         throw new Error(response.message || 'Failed to create product.')
       }
@@ -295,7 +299,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
     <div className="form-page">
       {/* Header */}
       <div className="form-head">
-        <button type="button" className="detail-back" onClick={onBack}>
+        <button type="button" className="detail-back" onClick={handleBack}>
           <ArrowLeft size={18} /> Back to Catalog
         </button>
         <div className="form-head-actions">
@@ -420,7 +424,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
                 >
                   {uploading ? (
                     <>
-                      <Loader size={18} className="spin" /> Uploading to MinIO…
+                      <Loader size={18} className="spin" /> Uploading to MinIOâ€¦
                     </>
                   ) : (
                     <>
@@ -654,6 +658,57 @@ export default function CreateGunPage({ onBack, onSuccess }) {
             </div>
           </div>
 
+          {/* Additional Images */}
+          <div className="form-fieldset">
+            <div className="fieldset-header">
+              <label className="form-label">Additional Images (optional)</label>
+              <button
+                type="button"
+                className="btn btn--outline btn--sm"
+                onClick={() => setAdditionalImages((prev) => [...prev, ''])}
+              >
+                <Plus size={14} /> Add Image URL
+              </button>
+            </div>
+            {additionalImages.length === 0 ? (
+              <p className="form-hint">No additional images. Click "Add Image URL" to include more photos.</p>
+            ) : (
+              <div className="multi-rows">
+                {additionalImages.map((url, i) => (
+                  <div key={i} className="multi-row">
+                    <input
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      value={url}
+                      onChange={(e) => {
+                        const copy = [...additionalImages]
+                        copy[i] = e.target.value
+                        setAdditionalImages(copy)
+                      }}
+                      className="form-input"
+                    />
+                    {url && (
+                      <img
+                        src={url}
+                        alt="preview"
+                        style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--line)', flexShrink: 0 }}
+                        onError={(e) => { e.target.style.display = 'none' }}
+                      />
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn--danger-ghost"
+                      onClick={() => setAdditionalImages((prev) => prev.filter((_, j) => j !== i))}
+                      title="Remove"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Featured checkbox */}
           <div className="checkbox-row">
             <input
@@ -674,7 +729,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
             <button
               type="button"
               className="btn btn--outline"
-              onClick={onBack}
+              onClick={handleBack}
               disabled={creating}
             >
               Cancel
@@ -686,7 +741,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
             >
               {creating ? (
                 <>
-                  <Loader size={18} className="spin" /> Registering Hardware…
+                  <Loader size={18} className="spin" /> Registering Hardwareâ€¦
                 </>
               ) : (
                 'Commit to Armory'

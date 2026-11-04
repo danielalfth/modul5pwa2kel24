@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Shield,
   Copy,
@@ -45,7 +46,8 @@ const TABS = ['Overview', 'Drafts', 'About', 'Contact']
  * @param {Function} onEditProfile    — navigate to EditProfilePage
  * @param {Function} onOpenDraft      — navigate to Create/Edit with a draft loaded
  */
-export default function ProfilePage({ onReplaySplash, onEditProfile }) {
+export default function ProfilePage({ onReplaySplash }) {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Overview')
   const [profile] = useState(() => userService.getUserProfile())
   const [copied, setCopied] = useState(false)
@@ -86,12 +88,11 @@ export default function ProfilePage({ onReplaySplash, onEditProfile }) {
               <Play size={14} /> Replay Intro
             </button>
           )}
-          {onEditProfile && (
-            <button type="button" className="btn btn--primary btn--sm" onClick={onEditProfile}>
+          {(
+            <button type="button" className="btn btn--primary btn--sm" onClick={() => navigate('/profile/edit')}>
               <Edit3 size={14} /> Edit Profile
             </button>
-          )}
-        </div>
+          )}        </div>
       </section>
 
       {/* Tab nav */}

@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Camera, Save, Check, Shield } from 'lucide-react'
 import userService from '../services/userService'
 
 /**
  * EditProfilePage — dedicated page for editing operator profile.
- * Separated from ProfilePage to keep concerns clean.
  */
-export default function EditProfilePage({ onBack }) {
+export default function EditProfilePage() {
+  const navigate = useNavigate()
+  const onBack = () => navigate('/profile')
   const [profile] = useState(() => userService.getUserProfile())
   const [username, setUsername] = useState(profile.username || 'Shooter')
   const [bio, setBio] = useState(profile.bio || '')

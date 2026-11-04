@@ -1,36 +1,30 @@
 import { Heart } from 'lucide-react'
-import { useIsFavorited } from '../../hooks/useFavorites'
+import { useFavoritesContext } from '../../contexts/FavoritesContext'
 
 /**
- * A toggleable heart button.  Works with both server-backed and
- * localStorage-only favourites.
- *
- * @param {Object}   props
- * @param {string}   props.gunId  — product UUID (or local id)
- * @param {Function} [props.onToggle] — optional callback after toggle
+ * A toggleable heart button. Now uses shared FavoritesContext.
  */
 export default function FavoriteButton({ gunId, onToggle }) {
-  const { isFavorited, loading, toggleFavorite } = useIsFavorited(gunId)
+  const { isFavorited, toggleFavorite } = useFavoritesContext()
 
   const handleClick = async (e) => {
-    e.stopPropagation()          // don't bubble into card click
-    const result = await toggleFavorite()
+    e.stopPropagation()
+    const result = await toggleFavorite(gunId)
     if (result && onToggle) onToggle(result)
   }
 
   return (
     <button
       type="button"
-      className={`fav-btn${isFavorited ? ' fav-btn--active' : ''}`}
+      className={`fav-btn${isFavorited(gunId) ? ' fav-btn--active' : ''}`}
       onClick={handleClick}
-      disabled={loading}
-      aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-      title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+      aria-label={isFavorited(gunId) ? 'Remove from favorites' : 'Add to favorites'}
+      title={isFavorited(gunId) ? 'Remove from favorites' : 'Add to favorites'}
     >
       <Heart
         size={18}
-        fill={isFavorited ? 'var(--brass)' : 'none'}
-        stroke={isFavorited ? 'var(--brass)' : 'var(--steel)'}
+        fill={isFavorited(gunId) ? 'var(--brass)' : 'none'}
+        stroke={isFavorited(gunId) ? 'var(--brass)' : 'var(--steel)'}
       />
     </button>
   )

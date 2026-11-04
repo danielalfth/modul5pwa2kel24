@@ -7,8 +7,7 @@
  */
 export const getProductShareUrl = (product) => {
   const baseUrl = window.location.origin
-  const slug = product.id || encodeURIComponent(product.name.toLowerCase().replace(/\s+/g, '-'))
-  return `${baseUrl}/?product=${slug}`
+  return `${baseUrl}/catalog/${product.id}`
 }
 
 /**

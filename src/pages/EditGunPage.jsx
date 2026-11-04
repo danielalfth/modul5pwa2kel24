@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Upload,
@@ -26,7 +27,11 @@ import ConfirmModal from '../components/modals/ConfirmModal'
  * Supports updating specs, steps, image replacement, and draft management.
  */
 export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
-  const targetId = gunId || gun?.id
+  const navigate = useNavigate()
+  const { id: routeId } = useParams()
+  const targetId = gunId || gun?.id || routeId
+  const handleBack = onBack || (() => navigate(-1))
+  const handleSuccess = onSuccess || (() => navigate('/'))
 
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -287,11 +292,7 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
       const res = await gunService.updateGun(targetId, payload)
       if (res.success || res.data) {
         deleteDraft(targetId)
-        if (onSuccess) {
-          onSuccess(res.data)
-        } else if (onBack) {
-          onBack()
-        }
+        handleSuccess(res.data)
       } else {
         throw new Error(res.message || 'Failed to update record on server.')
       }
@@ -315,7 +316,7 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
     <div className="form-page">
       {/* Head */}
       <div className="form-head">
-        <button type="button" className="detail-back" onClick={onBack}>
+        <button type="button" className="detail-back" onClick={handleBack}>
           <ArrowLeft size={18} /> Back
         </button>
         <button
@@ -580,7 +581,7 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
 
         {/* Submit */}
         <div className="form-actions-bar">
-          <button type="button" className="btn btn--outline" onClick={onBack} disabled={updating}>
+          <button type="button" className="btn btn--outline" onClick={handleBack} disabled={updating}>
             Cancel
           </button>
           <button type="submit" className="btn btn--primary" disabled={updating}>

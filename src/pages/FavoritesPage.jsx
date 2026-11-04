@@ -1,16 +1,14 @@
 import { useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Heart, Loader, AlertCircle, ArrowRight } from 'lucide-react'
-import { useFavorites } from '../hooks/useFavorites'
+import { useFavoritesContext } from '../contexts/FavoritesContext'
 import { useGuns } from '../hooks/useGuns'
 import GUNS_LOCAL from '../data/guns'
 import GunCard from '../components/gun/GunCard'
 
-/**
- * FavoritesPage — Displays user's shortlisted / favorited weapons.
- * Supports dual-mode (server API + localStorage fallback).
- */
-export default function FavoritesPage({ onSelectGun, onNavigateCatalog }) {
-  const { favorites, loading: favLoading, error: favError, refetch } = useFavorites()
+export default function FavoritesPage() {
+  const navigate = useNavigate()
+  const { favorites, loading: favLoading, error: favError, refetch } = useFavoritesContext()
   const { guns: apiGuns } = useGuns({ limit: 100 })
 
   // All known guns catalog for fallback item lookup
@@ -109,7 +107,7 @@ export default function FavoritesPage({ onSelectGun, onNavigateCatalog }) {
               <button
                 type="button"
                 className="btn btn--primary"
-                onClick={onNavigateCatalog}
+                onClick={() => navigate('/')}
                 style={{ marginTop: '16px' }}
               >
                 Browse Catalog <ArrowRight size={16} />
@@ -124,7 +122,7 @@ export default function FavoritesPage({ onSelectGun, onNavigateCatalog }) {
               <GunCard
                 key={gun.id || gun.name}
                 gun={gun}
-                onSelect={onSelectGun}
+                onSelect={(g) => navigate(`/catalog/${g.id}`)}
               />
             ))}
           </ul>

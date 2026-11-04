@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import gunService from '../services/gunService'
 import { getCache, setCache, generateCacheKey } from '../utils/queryCache'
 
@@ -6,10 +6,9 @@ import { getCache, setCache, generateCacheKey } from '../utils/queryCache'
 // useGuns — fetch the paginated / filtered product list from the API.
 //
 // Returns { guns, loading, error, pagination, refetch }.
-// When the API is unreachable the `error` string will be set and `guns`
-// will remain an empty array so the UI can show a proper error state.
 //
-// ponytail: cache with 5 min TTL to reduce API calls
+// ponytail: AbortController cancels stale requests when params change fast
+// (e.g. typing in search). Cache with 5 min TTL avoids redundant fetches.
 // ---------------------------------------------------------------------------
 
 export function useGuns(params = {}) {
@@ -18,13 +17,17 @@ export function useGuns(params = {}) {
   const [error, setError] = useState(null)
   const [pagination, setPagination] = useState(null)
 
-  // Serialise params so the effect re-runs when they change.
+  // Stable string key — re-run effect only when params actually change
   const paramKey = JSON.stringify(params)
+  const abortRef = useRef(null)
 
   const fetchGuns = useCallback(async (skipCache = false) => {
+    // Cancel any in-flight request
+    if (abortRef.current) abortRef.current.abort()
+    abortRef.current = new AbortController()
+
     const cacheKey = generateCacheKey('guns', params)
-    
-    // Check cache first
+
     if (!skipCache) {
       const cached = getCache(cacheKey)
       if (cached) {
@@ -42,45 +45,46 @@ export function useGuns(params = {}) {
 
       const response = await gunService.getGuns(params)
 
+      // If this request was aborted, ignore the result
+      if (abortRef.current?.signal.aborted) return
+
       if (response.success) {
         const result = {
           guns: response.data || [],
-          pagination: response.pagination || null
+          pagination: response.pagination || null,
         }
         setGuns(result.guns)
         setPagination(result.pagination)
-        
-        // Cache the result
         setCache(cacheKey, result)
       } else {
         setError(response.message || 'Failed to fetch products.')
       }
     } catch (err) {
+      if (err?.name === 'CanceledError' || err?.name === 'AbortError') return
       setError(err.message || 'An error occurred while fetching products.')
       setGuns([])
     } finally {
-      setLoading(false)
+      if (!abortRef.current?.signal.aborted) setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramKey])
 
   useEffect(() => {
     fetchGuns()
+    return () => abortRef.current?.abort()
   }, [fetchGuns])
 
-  return { 
-    guns, 
-    loading, 
-    error, 
-    pagination, 
-    refetch: () => fetchGuns(true) // Force skip cache on manual refetch
+  return {
+    guns,
+    loading,
+    error,
+    pagination,
+    refetch: () => fetchGuns(true),
   }
 }
 
 // ---------------------------------------------------------------------------
 // useGunById — fetch a single product by its UUID.
-//
-// Returns { gun, loading, error, refetch }.
 // ---------------------------------------------------------------------------
 
 export function useGunById(id) {
@@ -89,16 +93,11 @@ export function useGunById(id) {
   const [error, setError] = useState(null)
 
   const fetchGun = useCallback(async () => {
-    if (!id) {
-      setLoading(false)
-      return
-    }
+    if (!id) { setLoading(false); return }
     try {
       setLoading(true)
       setError(null)
-
       const response = await gunService.getGunById(id)
-
       if (response.success) {
         setGun(response.data)
       } else {
@@ -112,9 +111,7 @@ export function useGunById(id) {
     }
   }, [id])
 
-  useEffect(() => {
-    fetchGun()
-  }, [fetchGun])
+  useEffect(() => { fetchGun() }, [fetchGun])
 
   return { gun, loading, error, refetch: fetchGun }
 }
