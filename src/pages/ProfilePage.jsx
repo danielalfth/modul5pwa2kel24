@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Shield,
   Copy,
@@ -11,8 +11,14 @@ import {
   Trash2,
   AlertCircle,
   PackageOpen,
+  Archive,
+  RotateCcw,
+  Loader,
 } from 'lucide-react'
 import userService from '../services/userService'
+import gunService from '../services/gunService'
+import ConfirmModal from '../components/modals/ConfirmModal'
+import { clearAllCache } from '../utils/queryCache'
 import { useFavorites } from '../hooks/useFavorites'
 import {
   getAllDraftIds,
@@ -37,7 +43,7 @@ const loadAllDrafts = () =>
 // ---------------------------------------------------------------------------
 // Tab definitions
 // ---------------------------------------------------------------------------
-const TABS = ['Overview', 'Drafts', 'About', 'Contact']
+const TABS = ['Overview', 'Drafts', 'Archive', 'About', 'Contact']
 
 /**
  * ProfilePage — tabbed hub: Overview, Drafts, About, Contact
@@ -48,7 +54,8 @@ const TABS = ['Overview', 'Drafts', 'About', 'Contact']
  */
 export default function ProfilePage({ onReplaySplash }) {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('Overview')
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'Overview')
   const [profile] = useState(() => userService.getUserProfile())
   const [copied, setCopied] = useState(false)
   const [drafts, setDrafts] = useState(loadAllDrafts)
@@ -59,6 +66,61 @@ export default function ProfilePage({ onReplaySplash }) {
     navigator.clipboard?.writeText(profile.userId)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // ---- Archive (soft delete) ----
+  const [archived, setArchived] = useState([])
+  const [archivedLoading, setArchivedLoading] = useState(false)
+  const [archivedError, setArchivedError] = useState('')
+  const [archiveBusy, setArchiveBusy] = useState(false)
+  const [permDeleteTarget, setPermDeleteTarget] = useState(null)
+
+  const loadArchived = useCallback(async () => {
+    try {
+      setArchivedLoading(true)
+      setArchivedError('')
+      const res = await gunService.getArchivedGuns()
+      setArchived(res.success ? res.data || [] : [])
+    } catch (err) {
+      setArchivedError(err.message || 'Failed to load archive.')
+    } finally {
+      setArchivedLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'Archive') loadArchived()
+  }, [activeTab, loadArchived])
+
+  const handleRestore = async (gun) => {
+    try {
+      setArchiveBusy(true)
+      setArchivedError('')
+      const res = await gunService.restoreGun(gun.id)
+      if (res && res.success === false) throw new Error(res.message)
+      clearAllCache()
+      setArchived((prev) => prev.filter((g) => g.id !== gun.id))
+    } catch (err) {
+      setArchivedError(err.message || 'Failed to restore.')
+    } finally {
+      setArchiveBusy(false)
+    }
+  }
+
+  const handleDeletePermanent = async () => {
+    if (!permDeleteTarget) return
+    try {
+      setArchiveBusy(true)
+      setArchivedError('')
+      await gunService.deleteGun(permDeleteTarget.id)
+      clearAllCache()
+      setArchived((prev) => prev.filter((g) => g.id !== permDeleteTarget.id))
+      setPermDeleteTarget(null)
+    } catch (err) {
+      setArchivedError(err.message || 'Failed to delete.')
+    } finally {
+      setArchiveBusy(false)
+    }
   }
 
   const handleDeleteDraft = (id) => {
@@ -228,6 +290,90 @@ export default function ProfilePage({ onReplaySplash }) {
           <p className="form-hint" style={{ marginTop: 16 }}>
             Drafts are stored locally in your browser. They will be available when you open the Create or Edit form.
           </p>
+        </div>
+      )}
+
+      {/* ── TAB: Archive ── */}
+      {activeTab === 'Archive' && (
+        <div className="card-box">
+          <div className="fieldset-header" style={{ marginBottom: '16px' }}>
+            <h2 className="card-box-title" style={{ margin: 0 }}>
+              Archived Products
+            </h2>
+            <span className="count">{archived.length} archived</span>
+          </div>
+
+          {archivedLoading && (
+            <div className="state-box" style={{ border: 'none', padding: '32px 0' }}>
+              <Loader size={28} className="spin" />
+              <p>Loading archive…</p>
+            </div>
+          )}
+
+          {!archivedLoading && archivedError && (
+            <div className="state-box state-box--error" style={{ border: 'none', padding: '16px 0' }}>
+              <AlertCircle size={24} />
+              <p>{archivedError}</p>
+            </div>
+          )}
+
+          {!archivedLoading && archived.length === 0 && !archivedError && (
+            <div className="state-box" style={{ border: 'none', padding: '32px 0' }}>
+              <Archive size={28} />
+              <p>No archived products. Archived items can be restored or deleted permanently from here.</p>
+            </div>
+          )}
+
+          {archived.length > 0 && (
+            <ul className="review-list">
+              {archived.map((gun) => (
+                <li key={gun.id} className="review-item">
+                  <div className="review-head">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span className="review-user">
+                        {gun.name}
+                        {gun.type ? <span className="type" style={{ marginLeft: 8 }}>{gun.type}</span> : null}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--steel)' }}>
+                        Archived {gun.deleted_at ? new Date(gun.deleted_at).toLocaleString('id-ID') : ''}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className="btn btn--outline btn--sm"
+                        disabled={archiveBusy}
+                        onClick={() => handleRestore(gun)}
+                        title="Restore to catalog"
+                      >
+                        <RotateCcw size={14} /> Restore
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--danger-ghost btn--sm"
+                        disabled={archiveBusy}
+                        onClick={() => setPermDeleteTarget(gun)}
+                        title="Delete permanently"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <ConfirmModal
+            open={!!permDeleteTarget}
+            title="Delete Permanently"
+            message={`Delete "${permDeleteTarget?.name}" permanently? This cannot be undone.`}
+            confirmLabel="Delete"
+            danger
+            loading={archiveBusy}
+            onConfirm={handleDeletePermanent}
+            onCancel={() => setPermDeleteTarget(null)}
+          />
         </div>
       )}
 

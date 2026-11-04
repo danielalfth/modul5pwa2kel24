@@ -7,6 +7,7 @@ import GunCard from '../components/gun/GunCard'
 import AdvancedFilter from '../components/common/AdvancedFilter'
 import ConfirmModal from '../components/modals/ConfirmModal'
 import gunService from '../services/gunService'
+import { clearAllCache } from '../utils/queryCache'
 import { matchesSearch, matchesCategory, sortItems, extractCategories } from '../utils/helpers'
 
 const PAGE_SIZE = 12
@@ -79,11 +80,13 @@ export default function Catalog() {
     try {
       setDeleting(true)
       setDeleteError('')
-      await gunService.deleteGun(deleteTarget.id)
+      const res = await gunService.archiveGun(deleteTarget.id)
+      if (res && res.success === false) throw new Error(res.message)
+      clearAllCache()
       setDeleteTarget(null)
       refetch()
     } catch (err) {
-      setDeleteError(err.message || 'Failed to delete.')
+      setDeleteError(err.message || 'Failed to archive.')
     } finally {
       setDeleting(false)
     }
@@ -232,10 +235,9 @@ export default function Catalog() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Delete Product"
-        message={`Delete "${deleteTarget?.name}"? This cannot be undone.`}
-        confirmLabel="Delete"
-        danger
+        title="Archive Product"
+        message={`Archive "${deleteTarget?.name}"? It can be restored or permanently deleted from Profile > Archive.`}
+        confirmLabel="Archive"
         loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => { setDeleteTarget(null); setDeleteError('') }}

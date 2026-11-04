@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Loader, AlertCircle } from 'lucide-react'
 import GunDetail from '../components/gun/GunDetail'
 import { useGunById } from '../hooks/useGuns'
+import gunService from '../services/gunService'
+import { clearAllCache } from '../utils/queryCache'
 
 /**
  * GunDetailPage — route /catalog/:id
@@ -49,7 +51,7 @@ export default function GunDetailPage() {
   }
 
   // Archived or draft not owned by user → treat as not found
-  if (gun.archived_at || (gun.status === 'draft')) {
+  if (gun.deleted_at || (gun.status === 'draft')) {
     return (
       <div className="state-box" style={{ marginTop: 48 }}>
         <AlertCircle size={28} />
@@ -70,7 +72,12 @@ export default function GunDetailPage() {
       gun={gun}
       onBack={() => navigate('/')}
       onEdit={() => navigate(`/edit/${gun.id}`)}
-      onDelete={() => navigate('/')}
+      onArchive={async (g) => {
+        const res = await gunService.archiveGun(g.id)
+        if (res && res.success === false) return
+        clearAllCache()
+        navigate('/profile', { state: { tab: 'Archive' } })
+      }}
     />
   )
 }
