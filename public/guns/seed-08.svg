@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
+  <rect width="120" height="90" fill="#dee2e4" />
+  <g fill="#182026">
+    <!-- Heavy-walled barrel & full-length magazine tube -->
+    <rect x="16" y="36" width="96" height="6" />
+    <rect x="28" y="42" width="84" height="6" />
+    <!-- Gold bead front sight -->
+    <circle cx="110" cy="34" r="2" fill="#a67c2e" />
+    <!-- Receiver -->
+    <rect x="14" y="36" width="30" height="13" />
+    <!-- Forend / pump slide (corrugated) -->
+    <rect x="68" y="40" width="24" height="9" fill="#28323c" rx="1" />
+    <!-- Full polymer buttstock -->
+    <path d="M14 36H6l-2 18h10l8-8v-6z" />
+    <!-- Trigger assembly -->
+    <path d="M30 49h10l-2 9h-6z" />
+  </g>
+  <text x="60" y="82" font-family="monospace" font-size="6" fill="#6c7a86" text-anchor="middle">MOSSBERG 590A1</text>
+</svg>
+

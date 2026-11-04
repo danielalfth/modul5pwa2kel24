@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
+  <rect width="120" height="90" fill="#e6e2db" />
+  <g fill="#181e24">
+    <!-- Colt 1911 classic profile -->
+    <rect x="26" y="30" width="66" height="13" rx="1" />
+    <rect x="86" y="25" width="6" height="5" />
+    <path d="M32 43h22l-4 35H38z" />
+    <path d="M56 43h10l3 10h-8z" />
+  </g>
+  <!-- Rosewood grip panel -->
+  <path d="M34 46h17l-3 29H38z" fill="#7a4224" />
+  <text x="60" y="82" font-family="monospace" font-size="6" fill="#6c7a86" text-anchor="middle">COLT 1911</text>
+</svg>
+

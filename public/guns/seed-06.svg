@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
+  <rect width="120" height="90" fill="#dbe0e3" />
+  <g fill="#161c22">
+    <!-- Benelli M4 tactical barrel & mag tube -->
+    <rect x="18" y="36" width="94" height="6" />
+    <rect x="42" y="42" width="66" height="5" />
+    <rect x="108" y="32" width="4" height="4" fill="#a67c2e" />
+    <!-- Receiver & Picatinny rail -->
+    <rect x="28" y="32" width="28" height="4" fill="#2d3742" />
+    <rect x="26" y="36" width="30" height="12" />
+    <!-- Tactical pistol grip & stock -->
+    <path d="M12 36h14v10H16l-4 12h-4z" />
+    <path d="M38 48h10l-4 18H36z" />
+  </g>
+  <text x="60" y="82" font-family="monospace" font-size="6" fill="#6c7a86" text-anchor="middle">BENELLI M4</text>
+</svg>
+

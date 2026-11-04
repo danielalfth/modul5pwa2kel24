@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
+  <rect width="120" height="90" fill="#e8e4dc" />
+  <!-- M1A Long barrel with slotted flash suppressor -->
+  <rect x="12" y="36" width="100" height="5" fill="#20252b" />
+  <rect x="106" y="34" width="6" height="2" fill="#20252b" />
+  <!-- Walnut military stock -->
+  <path d="M8 36h32l16 8h40l-2 5H52l-20-4H8z" fill="#754823" />
+  <!-- Steel box magazine -->
+  <path d="M48 48h14l-2 16H46z" fill="#181e24" />
+  <!-- Sight bridge -->
+  <rect x="36" y="32" width="14" height="4" fill="#20252b" />
+  <text x="60" y="82" font-family="monospace" font-size="6" fill="#6c7a86" text-anchor="middle">SPRINGFIELD M1A</text>
+</svg>
+

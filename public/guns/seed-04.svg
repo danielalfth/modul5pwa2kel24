@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
+  <rect width="120" height="90" fill="#ece6dc" />
+  <!-- Long barrel & action -->
+  <rect x="14" y="38" width="98" height="6" fill="#20252b" />
+  <!-- Scope -->
+  <rect x="36" y="28" width="36" height="5" fill="#283038" />
+  <rect x="42" y="33" width="4" height="5" fill="#20252b" />
+  <rect x="62" y="33" width="4" height="5" fill="#20252b" />
+  <!-- Classic Walnut Stock -->
+  <path d="M10 38h28l18 10h42l-4 6H48l-22-6H10z" fill="#6e4222" />
+  <!-- Bolt handle -->
+  <circle cx="48" cy="36" r="2.5" fill="#a67c2e" />
+  <text x="60" y="82" font-family="monospace" font-size="6" fill="#6c7a86" text-anchor="middle">WINCHESTER M70</text>
+</svg>
+

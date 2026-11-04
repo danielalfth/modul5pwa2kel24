@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
+  <rect width="120" height="90" fill="#dfe3e6" />
+  <g fill="#151a1e">
+    <!-- SIG P226 profile -->
+    <rect x="22" y="28" width="72" height="15" rx="2" />
+    <rect x="88" y="23" width="6" height="5" />
+    <path d="M28 43h26l-6 35H34z" />
+    <path d="M56 43h12l4 11h-10z" />
+  </g>
+  <!-- Decocker and slide lever -->
+  <rect x="42" y="38" width="6" height="3" fill="#8c9aa5" />
+  <text x="60" y="82" font-family="monospace" font-size="6" fill="#6c7a86" text-anchor="middle">SIG SAUER P226</text>
+</svg>
+

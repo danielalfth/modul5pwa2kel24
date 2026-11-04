@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90">
+  <rect width="120" height="90" fill="#e2e6e9" />
+  <g fill="#1c242c">
+    <!-- Beretta 92FS open-top slide -->
+    <rect x="24" y="32" width="68" height="12" rx="1" />
+    <rect x="42" y="28" width="30" height="4" fill="#2b3540" />
+    <rect x="88" y="27" width="6" height="5" />
+    <path d="M30 44h24l-5 34H36z" />
+    <path d="M58 44h11l4 10h-9z" />
+  </g>
+  <circle cx="43" cy="58" r="4" fill="#a67c2e" />
+  <text x="60" y="82" font-family="monospace" font-size="6" fill="#6c7a86" text-anchor="middle">BERETTA 92FS</text>
+</svg>
+
