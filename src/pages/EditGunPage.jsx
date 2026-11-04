@@ -51,6 +51,8 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
   })
 
   const [currentImageUrl, setCurrentImageUrl] = useState('')
+  const [additionalImages, setAdditionalImages] = useState([])
+  const [uploadingAdditional, setUploadingAdditional] = useState(false)
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [uploading, setUploading] = useState(false)
@@ -94,6 +96,11 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
             is_featured: Boolean(data.is_featured),
           })
           setCurrentImageUrl(data.image_url || data.image || '/guns/pistol.svg')
+          if (Array.isArray(data.images) && data.images.length > 1) {
+            setAdditionalImages(data.images.slice(1))
+          } else {
+            setAdditionalImages([])
+          }
 
           if (data.ingredients && data.ingredients.length > 0) {
             setSpecs(data.ingredients.map((ing) => ({
@@ -210,6 +217,37 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
     }
   }
 
+  // Handle uploading additional gallery images from device
+  const handleUploadAdditionalFiles = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    setUploadingAdditional(true)
+    setError('')
+    try {
+      const urls = []
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`File "${file.name}" exceeds 5MB limit.`)
+        }
+        const res = await uploadService.uploadImage(file)
+        if (res.success && res.data?.url) {
+          urls.push(res.data.url)
+        } else {
+          throw new Error(res.message || 'Image upload failed.')
+        }
+      }
+      setAdditionalImages((prev) => [...prev, ...urls])
+      setSuccessMsg(`${urls.length} photo(s) added to gallery.`)
+      setTimeout(() => setSuccessMsg(''), 3000)
+    } catch (err) {
+      setError(err.message || 'Failed to upload additional photos.')
+    } finally {
+      setUploadingAdditional(false)
+      e.target.value = ''
+    }
+  }
+
   // Specs & Steps
   const handleSpecChange = (index, field, value) => {
     setSpecs((prev) => {
@@ -278,6 +316,7 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
       category: formData.category || 'makanan',
       description: formData.description.trim() || `${formData.type} caliber ${formData.caliber}.`,
       image_url: imagePreview || currentImageUrl || '/guns/pistol.svg',
+      images: [imagePreview || currentImageUrl || '/guns/pistol.svg', ...additionalImages].filter(Boolean),
       prep_time: 15,
       cook_time: Number(formData.price) || 500,
       servings: Number(formData.servings) || 1,
@@ -562,6 +601,85 @@ export default function EditGunPage({ gun, gunId, onBack, onSuccess }) {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Gallery / Additional Images */}
+        <div className="form-fieldset">
+          <div className="fieldset-header" style={{ flexWrap: 'wrap', gap: 8 }}>
+            <label className="form-label" style={{ margin: 0 }}>Gallery / Additional Images (optional)</label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <label
+                htmlFor="edit-extra-images-file-input"
+                className="btn btn--primary btn--sm"
+                style={{ cursor: uploadingAdditional ? 'not-allowed' : 'pointer', margin: 0 }}
+                title="Upload image files from your computer"
+              >
+                <Upload size={14} /> Upload Image(s)
+                <input
+                  id="edit-extra-images-file-input"
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleUploadAdditionalFiles}
+                  disabled={uploadingAdditional}
+                  className="hidden-file-input"
+                />
+              </label>
+              <button
+                type="button"
+                className="btn btn--outline btn--sm"
+                onClick={() => setAdditionalImages((prev) => [...prev, ''])}
+              >
+                <Plus size={14} /> Add Image URL
+              </button>
+            </div>
+          </div>
+
+          {uploadingAdditional && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--brass)' }}>
+              <Loader size={16} className="spin" />
+              <span>Uploading additional photo(s) to storage…</span>
+            </div>
+          )}
+
+          {additionalImages.length === 0 ? (
+            <p className="form-hint">No additional images yet. Click <strong>Upload Image(s)</strong> to select files, or <strong>Add Image URL</strong> to enter a link.</p>
+          ) : (
+            <div className="multi-rows">
+              {additionalImages.map((url, i) => (
+                <div key={i} className="multi-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {url ? (
+                    <img
+                      src={url}
+                      alt={`Gallery ${i + 1}`}
+                      style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--line)', flexShrink: 0 }}
+                      onError={(e) => { e.target.style.display = 'none' }}
+                    />
+                  ) : null}
+                  <input
+                    type="url"
+                    placeholder="https://example.com/image.jpg"
+                    value={url}
+                    onChange={(e) => {
+                      const copy = [...additionalImages]
+                      copy[i] = e.target.value
+                      setAdditionalImages(copy)
+                    }}
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn--danger-ghost"
+                    onClick={() => setAdditionalImages((prev) => prev.filter((_, j) => j !== i))}
+                    title="Remove image"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Featured */}

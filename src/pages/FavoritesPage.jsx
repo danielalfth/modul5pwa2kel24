@@ -103,16 +103,14 @@ export default function FavoritesPage() {
             <p className="lede">
               Explore the armory catalog and click the heart icon on any piece to save it here.
             </p>
-            {onNavigateCatalog && (
-              <button
-                type="button"
-                className="btn btn--primary"
-                onClick={() => navigate('/')}
-                style={{ marginTop: '16px' }}
-              >
-                Browse Catalog <ArrowRight size={16} />
-              </button>
-            )}
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => navigate('/')}
+              style={{ marginTop: '16px' }}
+            >
+              Browse Catalog <ArrowRight size={16} />
+            </button>
           </div>
         )}
 

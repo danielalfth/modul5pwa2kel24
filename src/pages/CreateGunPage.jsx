@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -47,8 +47,10 @@ export default function CreateGunPage({ onBack, onSuccess }) {
 
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
+  const [extraFiles, setExtraFiles] = useState([])
   const [uploadedImageUrl, setUploadedImageUrl] = useState('')
   const [additionalImages, setAdditionalImages] = useState([])
+  const [uploadingAdditional, setUploadingAdditional] = useState(false)
 
   // Specifications (ingredients in API)
   const [specs, setSpecs] = useState([
@@ -89,7 +91,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
         setTimeout(() => setSuccessMsg(''), 3000)
       }
     }
-  }, [formData, specs, steps, uploadedImageUrl])
+  }, [formData, specs, steps, uploadedImageUrl, additionalImages])
 
   // Auto-save draft every 30 seconds while in form step
   useEffect(() => {
@@ -126,37 +128,41 @@ export default function CreateGunPage({ onBack, onSuccess }) {
     setDraftTimestamp(null)
   }
 
-  // Handle file selection
+  // Handle file selection (supports selecting multiple images)
   const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size exceeds 5MB limit.')
-      return
-    }
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
     const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    if (!allowed.includes(file.type)) {
-      setError('Allowed formats: .jpg, .jpeg, .png, .webp')
-      return
+    for (const f of files) {
+      if (f.size > 5 * 1024 * 1024) {
+        setError(`File "${f.name}" exceeds 5MB limit.`)
+        return
+      }
+      if (!allowed.includes(f.type)) {
+        setError('Allowed formats: .jpg, .jpeg, .png, .webp')
+        return
+      }
     }
 
-    setImageFile(file)
-    setImagePreview(URL.createObjectURL(file))
+    const primary = files[0]
+    setImageFile(primary)
+    setImagePreview(URL.createObjectURL(primary))
+    setExtraFiles(files.slice(1))
     setError('')
   }
 
   // Quick fallback select vector from local assets
   const handleSelectPreset = (url) => {
     setImageFile(null)
+    setExtraFiles([])
     setImagePreview(url)
     setUploadedImageUrl(url)
     setCurrentStep('form')
     setError('')
   }
 
-  // Upload image to server
+  // Upload image(s) to server
   const handleUploadImage = async () => {
     if (!imageFile) {
       // If user already previewed a preset or entered a url, advance to form
@@ -172,19 +178,68 @@ export default function CreateGunPage({ onBack, onSuccess }) {
       setUploading(true)
       setError('')
       const result = await uploadService.uploadImage(imageFile)
+      let primaryUrl = ''
       if (result.success && result.data?.url) {
-        setUploadedImageUrl(result.data.url)
-        setCurrentStep('form')
+        primaryUrl = result.data.url
       } else {
-        throw new Error(result.message || 'Image upload failed.')
+        primaryUrl = imagePreview || '/guns/pistol.svg'
       }
+      setUploadedImageUrl(primaryUrl)
+
+      // If additional images were selected at Step 1, upload them too
+      if (extraFiles.length > 0) {
+        const extraUrls = []
+        for (const file of extraFiles) {
+          try {
+            const res = await uploadService.uploadImage(file)
+            if (res.success && res.data?.url) {
+              extraUrls.push(res.data.url)
+            }
+          } catch { /* proceed */ }
+        }
+        if (extraUrls.length > 0) {
+          setAdditionalImages((prev) => [...prev, ...extraUrls])
+        }
+      }
+
+      setCurrentStep('form')
     } catch (err) {
       console.warn('Upload API failed, falling back to local preview:', err)
-      // Allow fallback to image preview so the user can continue even if MinIO bucket is unreachable
       setUploadedImageUrl(imagePreview || '/guns/pistol.svg')
       setCurrentStep('form')
     } finally {
       setUploading(false)
+    }
+  }
+
+  // Handle uploading additional gallery images from device
+  const handleUploadAdditionalFiles = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    setUploadingAdditional(true)
+    setError('')
+    try {
+      const urls = []
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`File "${file.name}" exceeds 5MB limit.`)
+        }
+        const res = await uploadService.uploadImage(file)
+        if (res.success && res.data?.url) {
+          urls.push(res.data.url)
+        } else {
+          throw new Error(res.message || 'Image upload failed.')
+        }
+      }
+      setAdditionalImages((prev) => [...prev, ...urls])
+      setSuccessMsg(`${urls.length} photo(s) added to gallery.`)
+      setTimeout(() => setSuccessMsg(''), 3000)
+    } catch (err) {
+      setError(err.message || 'Failed to upload additional photos.')
+    } finally {
+      setUploadingAdditional(false)
+      e.target.value = ''
     }
   }
 
@@ -360,14 +415,15 @@ export default function CreateGunPage({ onBack, onSuccess }) {
               <input
                 id="gun-image-input"
                 type="file"
+                multiple
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleImageChange}
                 className="hidden-file-input"
               />
               <label htmlFor="gun-image-input" className="upload-label">
                 <Upload size={36} className="upload-icon" />
-                <span className="upload-main-text">Click to choose an image file</span>
-                <span className="upload-sub-text">JPG, PNG, or WebP up to 5MB</span>
+                <span className="upload-main-text">Click to choose image file(s)</span>
+                <span className="upload-sub-text">JPG, PNG, or WebP up to 5MB (select 1 or multiple for gallery)</span>
               </label>
 
               <div className="preset-selector">
@@ -406,6 +462,7 @@ export default function CreateGunPage({ onBack, onSuccess }) {
                   className="preview-remove-btn"
                   onClick={() => {
                     setImageFile(null)
+                    setExtraFiles([])
                     setImagePreview(null)
                     setUploadedImageUrl('')
                   }}
@@ -414,6 +471,11 @@ export default function CreateGunPage({ onBack, onSuccess }) {
                   <X size={18} />
                 </button>
               </div>
+              {extraFiles.length > 0 && (
+                <p className="form-hint" style={{ marginTop: 8, color: 'var(--brass)' }}>
+                  +{extraFiles.length} additional image(s) selected for the product gallery.
+                </p>
+              )}
 
               <div className="preview-actions">
                 <button
@@ -658,24 +720,59 @@ export default function CreateGunPage({ onBack, onSuccess }) {
             </div>
           </div>
 
-          {/* Additional Images */}
+          {/* Additional Images / Gallery */}
           <div className="form-fieldset">
-            <div className="fieldset-header">
-              <label className="form-label">Additional Images (optional)</label>
-              <button
-                type="button"
-                className="btn btn--outline btn--sm"
-                onClick={() => setAdditionalImages((prev) => [...prev, ''])}
-              >
-                <Plus size={14} /> Add Image URL
-              </button>
+            <div className="fieldset-header" style={{ flexWrap: 'wrap', gap: 8 }}>
+              <label className="form-label" style={{ margin: 0 }}>Gallery / Additional Images (optional)</label>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <label
+                  htmlFor="extra-images-file-input"
+                  className="btn btn--primary btn--sm"
+                  style={{ cursor: uploadingAdditional ? 'not-allowed' : 'pointer', margin: 0 }}
+                  title="Upload image files from your computer"
+                >
+                  <Upload size={14} /> Upload Image(s)
+                  <input
+                    id="extra-images-file-input"
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    onChange={handleUploadAdditionalFiles}
+                    disabled={uploadingAdditional}
+                    className="hidden-file-input"
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn btn--outline btn--sm"
+                  onClick={() => setAdditionalImages((prev) => [...prev, ''])}
+                >
+                  <Plus size={14} /> Add Image URL
+                </button>
+              </div>
             </div>
+
+            {uploadingAdditional && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0', color: 'var(--brass)' }}>
+                <Loader size={16} className="spin" />
+                <span>Uploading additional photo(s) to storage…</span>
+              </div>
+            )}
+
             {additionalImages.length === 0 ? (
-              <p className="form-hint">No additional images. Click "Add Image URL" to include more photos.</p>
+              <p className="form-hint">No additional images yet. Click <strong>Upload Image(s)</strong> to select files, or <strong>Add Image URL</strong> to enter a link.</p>
             ) : (
               <div className="multi-rows">
                 {additionalImages.map((url, i) => (
-                  <div key={i} className="multi-row">
+                  <div key={i} className="multi-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {url ? (
+                      <img
+                        src={url}
+                        alt={`Gallery ${i + 1}`}
+                        style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--line)', flexShrink: 0 }}
+                        onError={(e) => { e.target.style.display = 'none' }}
+                      />
+                    ) : null}
                     <input
                       type="url"
                       placeholder="https://example.com/image.jpg"
@@ -686,15 +783,8 @@ export default function CreateGunPage({ onBack, onSuccess }) {
                         setAdditionalImages(copy)
                       }}
                       className="form-input"
+                      style={{ flex: 1 }}
                     />
-                    {url && (
-                      <img
-                        src={url}
-                        alt="preview"
-                        style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--line)', flexShrink: 0 }}
-                        onError={(e) => { e.target.style.display = 'none' }}
-                      />
-                    )}
                     <button
                       type="button"
                       className="btn btn--danger-ghost"
